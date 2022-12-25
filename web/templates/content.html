@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>图像超分辨率</title>
+    <link rel="stylesheet" type="text/css" href="https://www.layuicdn.com/layui/css/layui.css" />
+    <script src="https://www.layuicdn.com/layui/layui.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/layer/3.5.1/layer.js"></script>
+    <!--    引入jQuery-->
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        .field-left{
+            width: 80%;
+        }
+        .field-right{
+            width: 20%;
+        }
+        .layui-field-box img{
+            max-width: 100%;
+        }
+        .layui-table tbody tr {
+            height: 50px;
+        }
+        .layui-table-cell{
+            height: auto;
+            text-align: center;
+        }
+        fieldset.layui-elem-field{
+            width: 49%;
+        }
+        .layui-field-box img{
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div style="display: flex;align-content: center;justify-content: center">
+    <div class="layui-tab" style="width: 80%">
+          <ul class="layui-tab-title">
+            <li class="layui-this">图像超分辨率</li>
+          </ul>
+          <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <form class="layui-form" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">原始图片</label>
+                        <input type="file"  id="origin_img" name="origin_img" value=""/>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">图片URL</label>
+                        <div class="layui-input-block">
+                          <input type="text" name="url" placeholder="输入图片URL" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">人脸增强</label>
+                        <div class="layui-input-block">
+                          <input type="checkbox" name="face_enhance" lay-skin="switch">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                          <button class="layui-btn" lay-submit lay-filter="img">立即超分</button>
+                          <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                        </div>
+                    </div>
+                </form>
+                <div style="display: flex;margin-top: 30px">
+                  <fieldset class="layui-elem-field">
+                      <legend>原始图片</legend>
+                      <div class="layui-field-box">
+                        <img id="origin_img_res"  alt="" src="">
+                      </div>
+                    </fieldset>
+                    <fieldset class="layui-elem-field" style="margin-left: 30px">
+                      <legend>超分结果</legend>
+                      <div class="layui-field-box">
+                        <img id="convert_img_res"  alt="" src="">
+                      </div>
+                    </fieldset>
+                  </div>
+            </div>
+          </div>
+    </div>
+</div>
+<script>
+// 选项卡依赖element模块
+layui.use('element', function(){});
+// 弹窗函数
+let index = null
+function load() {
+    index = layer.load(1, {shade: [0.6, '#000000']})
+}
+function close() {
+    layer.close(index)
+}
+// 语音合成
+layui.use('form', function(){
+  var form = layui.form;
+  //监听提交
+  form.on('submit(img)', (origin) => {
+      let data = {face_enhance: origin.field.face_enhance === "on", data: ""}
+      const url = origin.field.url
+      if(url && url !== "") {
+          document.getElementById("origin_img_res").src = `${url}?t=${Math.random()}`
+          document.getElementById("convert_img_res").src = `/esr/img/url?u=${url}&t=${Math.random()}`
+          return false
+      }
+      let fileReader = new FileReader()
+      fileReader.onload = function () {
+          data.data = this.result
+          load()
+          $.post("/esr/img", data, (data, _)=>{
+            layer.msg('合成成功！', {icon: 6})
+            document.getElementById("origin_img_res").src = data.origin + "?t=" + Math.random()
+            document.getElementById("convert_img_res").src = data.convert + "?t=" + Math.random()
+            close()
+          })
+      }
+      fileReader.readAsDataURL(document.getElementById("origin_img").files[0]) // 读第一个文件的内容
+      return false;
+  });
+});
+</script>
+</body>
+</html>
